@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thcgs Dashbord</title>
+    <title>Export In-Out</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
@@ -23,8 +23,17 @@
 
                     <div class="flex items-center">
                         <div class="relative inline-block text-left">
+                          
                             <div class="flex justify-center mt-4">
-                                <label for="rowsPerPage" class="mr-2"></label>
+                                <div class="flex justify-center mt-4">
+                                    <button id="sortDescBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l focus:outline-none focus:shadow-outline">
+                                        เรียงจากล่าสุด
+                                    </button>
+                                    <button id="sortAscBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r focus:outline-none focus:shadow-outline">
+                                        เรียงจากเก่าสุด
+                                    </button>
+                                </div>
+                                <label for="rowsPerPage" class="mr-5"></label>
                                 <select id="rowsPerPage"
                                     class="block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="15">15</option>
@@ -117,16 +126,17 @@
                             </div>
                             <div class="border-b border-t border-gray-200 py-6">
                                 <!-- Export button -->
-   <div class="flex justify-center">
-       <button id="exportBtn"
-           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-           Export to TXT
-       </button>
-   </div>
+                                <div class="flex justify-center">
+                                    <button id="exportBtn"
+                                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                        Export to TXT
+                                    </button>
+                                </div>
 
 
-                       </div>
-                            <ul role="list"  class="space-y-4 pt-24 border-gray-200 pb-6 text-sm font-medium text-gray-900">
+                            </div>
+                            <ul role="list"
+                                class="space-y-4 pt-24 border-gray-200 pb-6 text-sm font-medium text-gray-900">
                                 <li>
                                     <a href="#">Google sheet</a>
                                 </li>
@@ -258,6 +268,32 @@
                         displayData(0, rowsPerPage, filteredData);
                     }
 
+                    // เรียงข้อมูลตามวันที่และเวลาในคอลัมน์ F
+                    function sortData(direction) {
+                        filteredData.sort((a, b) => {
+                            const dateA = moment(a[5], 'DD/MM/YYYY HH:mm').toDate();
+                            const dateB = moment(b[5], 'DD/MM/YYYY HH:mm').toDate();
+                            if (direction === 'desc') {
+                                return dateB - dateA; // เรียงจากมากไปน้อย (จากล่าสุดไปย้อนหลัง)
+                            } else {
+                                return dateA - dateB; // เรียงจากน้อยไปมาก (จากเก่าสุดไปขึ้น)
+                            }
+                        });
+
+                        // แสดงข้อมูล
+                        displayData(0, rowsPerPage, filteredData);
+                    }
+
+                    // Event handlers for sorting buttons
+                    $('#sortDescBtn').on('click', function () {
+                        sortData('desc');
+                    });
+
+                    $('#sortAscBtn').on('click', function () {
+                        sortData('asc');
+                    });
+
+
                     // ฟังก์ชันแสดงข้อมูล
                     function displayData(startIndex, endIndex, filteredData) {
                         tableBody.empty();
@@ -289,6 +325,8 @@
                         const totalPages = Math.ceil(filteredData.length / rowsPerPage);
                         paginationText.text(`Page ${currentPage} of ${totalPages}`);
                     }
+
+
 
 
                     // ฟังก์ชันควบคุมการนำทาง
