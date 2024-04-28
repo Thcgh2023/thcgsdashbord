@@ -144,6 +144,10 @@
                                 <li>
                                     <a href="#">แจ้งปัญหา</a>
                                 </li>
+                                <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+    ออกจากระบบ
+</button>
+
                             </ul>
 
 
@@ -211,20 +215,37 @@
 
     // กำหนดตัวแปรสำหรับการอ้างอิง Firebase Authentication service
     const auth = firebaseApp.auth();
-        // ตรวจสอบสถานะการเข้าสู่ระบบ
+       // ตรวจสอบสถานะการเข้าสู่ระบบ
 firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
-        // ถ้าผู้ใช้เข้าสู่ระบบอยู่แล้ว
+        // ถ้าผู้ใช้เข้าสู่ระบบ
         console.log('ผู้ใช้เข้าสู่ระบบแล้ว:', user);
-        // ไม่ต้องทำอะไร
+        // แสดงปุ่ม "ออกจากระบบ"
+        document.getElementById('logoutButton').style.display = 'block';
     } else {
         // ถ้าผู้ใช้ยังไม่ได้เข้าสู่ระบบ
         console.log('ยังไม่ได้เข้าสู่ระบบ');
+        // ซ่อนปุ่ม "ออกจากระบบ"
+        document.getElementById('logoutButton').style.display = 'none';
         // นำทางไปยังหน้าเข้าสู่ระบบ
         window.location.href = 'https://thcgh2023.github.io/thcgsdashbord/login.html';
     }
 });
 
+
+// หากมีการคลิกที่ปุ่ม "ออกจากระบบ"
+document.getElementById('logoutButton').addEventListener('click', function() {
+    // ออกจากระบบด้วย Firebase Authentication
+    firebase.auth().signOut().then(function() {
+        // ออกจากระบบสำเร็จ
+        console.log('ออกจากระบบสำเร็จ');
+        // นำทางกลับไปยังหน้าเข้าสู่ระบบหรือหน้าอื่นๆ ตามที่ต้องการ
+        window.location.href = 'https://thcgh2023.github.io/thcgsdashbord/login.html';
+    }).catch(function(error) {
+        // เกิดข้อผิดพลาดในการออกจากระบบ
+        console.error('เกิดข้อผิดพลาดในการออกจากระบบ:', error);
+    });
+});
 
 
 
