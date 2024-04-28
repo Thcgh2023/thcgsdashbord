@@ -258,9 +258,16 @@
                         displayData(0, rowsPerPage, filteredData);
                     }
 
-                    // ฟังก์ชันแสดงข้อมูล
+                     // ฟังก์ชันแสดงข้อมูล
                     function displayData(startIndex, endIndex, filteredData) {
                         tableBody.empty();
+
+                        // เรียงข้อมูลตามวันที่และเวลาในคอลัมน์ F
+                        filteredData.sort((a, b) => {
+                            const dateA = moment(a[5], 'DD/MM/YYYY HH:mm').toDate();
+                            const dateB = moment(b[5], 'DD/MM/YYYY HH:mm').toDate();
+                            return dateB - dateA; // เรียงลำดับจากมากไปน้อย (จากล่าสุดไปย้อนหลัง)
+                        });
 
                         // แสดงข้อมูล
                         for (let i = startIndex; i < endIndex && i < filteredData.length; i++) {
@@ -281,7 +288,7 @@
                                 tr.append(td);
                             });
 
-                            tableBody.append(tr);
+                            tableBody.append(tr); // เพิ่มข้อมูลไปที่ท้ายของตาราง
                         }
 
                         // อัปเดตข้อความในการควบคุมการนำทาง
