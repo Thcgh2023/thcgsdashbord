@@ -3,37 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Profile</title>
+    <title>User List</title>
     <!-- เพิ่ม Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="max-w-md w-full bg-white shadow-md rounded px-8 py-8">
-        <h1 class="text-2xl font-semibold mb-4">โปรไฟล์สมาชิก</h1>
-        <form id="profileForm" class="mb-4">
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="displayName">
-                    ชื่อที่แสดง
-                </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="displayName" type="text" placeholder="ชื่อที่แสดง" required>
-            </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                    อีเมล
-                </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="email" type="email" placeholder="อีเมล" required disabled>
-            </div>
-            <div class="flex items-center justify-between">
-                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-                    บันทึก
-                </button>
-            </div>
-        </form>
-        <p class="text-sm text-gray-700 text-center">ต้องการออกจากระบบ? <a href="#" class="text-blue-500">ออกจากระบบ</a></p>
+        <h1 class="text-2xl font-semibold mb-4">รายชื่อผู้ใช้ทั้งหมด</h1>
+        <div id="userList" class="mb-4">
+            <!-- ส่วนนี้จะถูกเติมด้วยรายการผู้ใช้ -->
+        </div>
+        <p class="text-sm text-gray-700 text-center">กลับไปยัง <a href="#" class="text-blue-500">หน้าหลัก</a></p>
     </div>
  <!-- เพิ่ม Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
     // กำหนด Firebase configuration ของคุณที่นี่
@@ -49,41 +33,19 @@
     // กำหนด Firebase App ด้วย configuration ของคุณ
     const firebaseApp = firebase.initializeApp(firebaseConfig);
 
-    // กำหนดตัวแปรสำหรับการอ้างอิง Firebase Authentication service
-    const auth = firebaseApp.auth();
+    // เรียกใช้ Firebase Firestore
+    const db = firebase.firestore();
 
-    // เมื่อเอกสารโหลดเสร็จ
-    document.addEventListener('DOMContentLoaded', function() {
-        // ตรวจสอบสถานะการเข้าสู่ระบบ
-        auth.onAuthStateChanged(function(user) {
-            if (user) {
-                // หากผู้ใช้เข้าสู่ระบบอยู่ ให้ดึงข้อมูลผู้ใช้
-                document.getElementById('displayName').value = user.displayName || '';
-                document.getElementById('email').value = user.email;
-            } else {
-                // หากไม่มีผู้ใช้เข้าสู่ระบบ ให้นำทางไปยังหน้าเข้าสู่ระบบ
-                window.location.href = 'login.html';
-            }
-        });
-    });
-
-    // เมื่อคลิกที่ปุ่มบันทึก
-    document.getElementById('profileForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const displayName = document.getElementById('displayName').value;
-
-        // อัปเดตข้อมูลโปรไฟล์ผู้ใช้
-        const user = auth.currentUser;
-        user.updateProfile({
-            displayName: displayName
-        }).then(function() {
-            // อัปเดตโปรไฟล์สำเร็จ
-            console.log('อัปเดตโปรไฟล์สำเร็จ');
-            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
-        }).catch(function(error) {
-            // เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์
-            console.error('เกิดข้อผิดพลาด:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    // ดึงข้อมูลผู้ใช้ทั้งหมดจาก Firestore
+    db.collection("users").get().then((querySnapshot) => {
+        const userList = document.getElementById('userList');
+        querySnapshot.forEach((doc) => {
+            const user = doc.data();
+            const userElement = document.createElement('div');
+            userElement.innerHTML = `<p><strong>ชื่อที่แสดง:</strong> ${user.displayName}</p>
+                                     <p><strong>อีเมล:</strong> ${user.email}</p>
+                                     <hr>`;
+            userList.appendChild(userElement);
         });
     });
 </script>
