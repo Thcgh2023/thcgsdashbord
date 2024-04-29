@@ -3,48 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Management</title>
+    <title>Member Profile</title>
     <!-- เพิ่ม Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="max-w-md w-full bg-white shadow-md rounded px-8 py-8">
-        <h1 class="text-2xl font-semibold mb-4">จัดการสมาชิก</h1>
-        <!-- รายการสมาชิก -->
-        <ul id="memberList" class="mb-4">
-            <!-- ใส่รายการสมาชิกที่ได้รับจาก Firebase ที่นี่ -->
-        </ul>
-        <!-- แบบฟอร์มเพิ่มสมาชิก -->
-        <form id="addMemberForm" class="mb-4">
+        <h1 class="text-2xl font-semibold mb-4">โปรไฟล์สมาชิก</h1>
+        <form id="profileForm" class="mb-4">
             <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="displayName">
+                    ชื่อที่แสดง
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="displayName" type="text" placeholder="ชื่อที่แสดง" required>
+            </div>
+            <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
                     อีเมล
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" type="email" placeholder="อีเมล" required>
-            </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-                    รหัสผ่าน
-                </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" placeholder="รหัสผ่าน" required>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="email" type="email" placeholder="อีเมล" required disabled>
             </div>
             <div class="flex items-center justify-between">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-                    เพิ่มสมาชิก
+                    บันทึก
                 </button>
             </div>
         </form>
-        <p class="text-sm text-gray-700 text-center">หากต้องการลบหรือแก้ไขรหัสผ่าน กรุณาคลิกที่รายการสมาชิกด้านบน</p>
+        <p class="text-sm text-gray-700 text-center">ต้องการออกจากระบบ? <a href="#" class="text-blue-500">ออกจากระบบ</a></p>
     </div>
  <!-- เพิ่ม Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
     // กำหนด Firebase configuration ของคุณที่นี่
     const firebaseConfig = {
-  apiKey: "AIzaSyB9JdqhYcNeKGijB6ZDzhe-1qLLi4p7wag",
+       apiKey: "AIzaSyB9JdqhYcNeKGijB6ZDzhe-1qLLi4p7wag",
   authDomain: "dashbordlogin.firebaseapp.com",
   projectId: "dashbordlogin",
   storageBucket: "dashbordlogin.appspot.com",
@@ -54,99 +48,44 @@
 
     // กำหนด Firebase App ด้วย configuration ของคุณ
     const firebaseApp = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
 
-    // โหลดรายการสมาชิกเมื่อเปิดหน้า
-    window.addEventListener('load', function() {
-        loadMembers();
+    // กำหนดตัวแปรสำหรับการอ้างอิง Firebase Authentication service
+    const auth = firebaseApp.auth();
+
+    // เมื่อเอกสารโหลดเสร็จ
+    document.addEventListener('DOMContentLoaded', function() {
+        // ตรวจสอบสถานะการเข้าสู่ระบบ
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // หากผู้ใช้เข้าสู่ระบบอยู่ ให้ดึงข้อมูลผู้ใช้
+                document.getElementById('displayName').value = user.displayName || '';
+                document.getElementById('email').value = user.email;
+            } else {
+                // หากไม่มีผู้ใช้เข้าสู่ระบบ ให้นำทางไปยังหน้าเข้าสู่ระบบ
+                window.location.href = 'login.html';
+            }
+        });
     });
 
-    // โหลดรายการสมาชิกจาก Firestore
-    function loadMembers() {
-        const memberList = document.getElementById('memberList');
-        memberList.innerHTML = ''; // เคลียร์รายการเก่า
-
-        db.collection("members").get().then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                const member = doc.data();
-                const li = document.createElement('li');
-                li.textContent = `${member.email} (${doc.id})`;
-
-                // เพิ่มลิงก์ลบสมาชิก
-                const deleteLink = document.createElement('a');
-                deleteLink.href = '#';
-                deleteLink.textContent = ' ลบ';
-                deleteLink.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    deleteMember(doc.id);
-                });
-                li.appendChild(deleteLink);
-
-                // เพิ่มลิงก์แก้ไขรหัสผ่าน
-                const editLink = document.createElement('a');
-                editLink.href = '#';
-                editLink.textContent = ' แก้ไขรหัสผ่าน';
-                editLink.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    editPassword(doc.id);
-                });
-                li.appendChild(editLink);
-
-                memberList.appendChild(li);
-            });
-        });
-    }
-
-    // เพิ่มสมาชิกใหม่
-    document.getElementById('addMemberForm').addEventListener('submit', function(event) {
+    // เมื่อคลิกที่ปุ่มบันทึก
+    document.getElementById('profileForm').addEventListener('submit', function(event) {
         event.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const displayName = document.getElementById('displayName').value;
 
-        // สร้างผู้ใช้ใหม่
-        firebase.auth().createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                // สร้างเอกสารสมาชิกใน Firestore
-                db.collection("members").doc(userCredential.user.uid).set({
-                    email: email
-                })
-                .then(() => {
-                    // โหลดรายการสมาชิกใหม่
-                    loadMembers();
-                })
-                .catch((error) => {
-                    console.error("เกิดข้อผิดพลาดในการสร้างเอกสาร: ", error);
-                });
-            })
-            .catch((error) => {
-                console.error("เกิดข้อผิดพลาดในการสร้างผู้ใช้: ", error);
-            });
-    });
-
-    // ลบสมาชิก
-    function deleteMember(memberId) {
-        db.collection("members").doc(memberId).delete().then(() => {
-            console.log("เอกสารถูกลบสำเร็จ");
-            // โหลดรายการสมาชิกใหม่
-            loadMembers();
-        }).catch((error) => {
-            console.error("เกิดข้อผิดพลาดในการลบเอกสาร: ", error);
+        // อัปเดตข้อมูลโปรไฟล์ผู้ใช้
+        const user = auth.currentUser;
+        user.updateProfile({
+            displayName: displayName
+        }).then(function() {
+            // อัปเดตโปรไฟล์สำเร็จ
+            console.log('อัปเดตโปรไฟล์สำเร็จ');
+            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+        }).catch(function(error) {
+            // เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์
+            console.error('เกิดข้อผิดพลาด:', error);
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         });
-    }
-
-    // แก้ไขรหัสผ่านสมาชิก
-    function editPassword(memberId) {
-        const newPassword = prompt("กรุณากรอกรหัสผ่านใหม่:");
-        if (newPassword) {
-            firebase.auth().currentUser.updatePassword(newPassword)
-                .then(() => {
-                    console.log("รหัสผ่านถูกอัปเดตสำเร็จ");
-                })
-                .catch((error) => {
-                    console.error("เกิดข้อผิดพลาดในการอัปเดตรหัสผ่าน: ", error);
-                });
-        }
-    }
+    });
 </script>
 
 </body>
