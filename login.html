@@ -30,52 +30,78 @@
             </div>
         </form>
     </div>
- <!-- เพิ่ม Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-<script>
-    // กำหนด Firebase configuration ของคุณที่นี่
-    const firebaseConfig = {
-        apiKey: "AIzaSyB9JdqhYcNeKGijB6ZDzhe-1qLLi4p7wag",
-  authDomain: "dashbordlogin.firebaseapp.com",
-  projectId: "dashbordlogin",
-  storageBucket: "dashbordlogin.appspot.com",
-  messagingSenderId: "408417621937",
-  appId: "1:408417621937:web:abf0071d9950872fcf0f90"
-    };
+    <!-- เพิ่ม Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    // กำหนด Firebase App ด้วย configuration ของคุณ
-    const firebaseApp = firebase.initializeApp(firebaseConfig);
+    <script>
+        // กำหนด Firebase configuration ของคุณที่นี่
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9JdqhYcNeKGijB6ZDzhe-1qLLi4p7wag",
+            authDomain: "dashbordlogin.firebaseapp.com",
+            projectId: "dashbordlogin",
+            storageBucket: "dashbordlogin.appspot.com",
+            messagingSenderId: "408417621937",
+            appId: "1:408417621937:web:abf0071d9950872fcf0f90"
+        };
 
-    // กำหนดตัวแปรสำหรับการอ้างอิง Firebase Authentication service
-    const auth = firebaseApp.auth();
+        // กำหนด Firebase App ด้วย configuration ของคุณ
+        const firebaseApp = firebase.initializeApp(firebaseConfig);
 
-    // เมื่อคลิกที่ปุ่มเข้าสู่ระบบ
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        // กำหนดตัวแปรสำหรับการอ้างอิง Firebase Authentication และ Firestore service
+        const auth = firebaseApp.auth();
+        const db = firebaseApp.firestore();
 
-        // เมื่อเข้าสู่ระบบสำเร็จ
-auth.signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-        // เข้าสู่ระบบสำเร็จ
-        const user = userCredential.user;
-        console.log('เข้าสู่ระบบสำเร็จ:', user);
-        // นำทางไปยังหน้าที่ต้องการ
-        window.location.href = 'https://thcgh2023.github.io/thcgsdashbord/';
-    })
-    .catch((error) => {
-        // เกิดข้อผิดพลาดในการเข้าสู่ระบบ
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error('เกิดข้อผิดพลาด:', errorMessage);
-        // สามารถแสดงข้อผิดพลาดหรือให้ผู้ใช้ลองใหม่อีกครั้งได้ที่นี่
-    });
+        // ฟังก์ชันตรวจสอบและบันทึกความพยายามในการล็อกอิน
+        async function checkAndLogAttempts(email) {
+            const userDoc = db.collection('loginAttempts').doc(email);
+            const docSnapshot = await userDoc.get();
+            if (docSnapshot.exists) {
+                const attempts = docSnapshot.data().attempts;
+                if (attempts >= 5) {
+                    alert("คุณได้เข้าสู่ระบบผิดพลาดเกิน 5 ครั้ง กรุณาลองใหม่ภายหลัง");
+                    return false;
+                }
+                await userDoc.update({ attempts: attempts + 1 });
+            } else {
+                await userDoc.set({ attempts: 1 });
+            }
+            return true;
+        }
 
-    });
-</script>
+        // เมื่อคลิกที่ปุ่มเข้าสู่ระบบ
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
+            // ตรวจสอบและบันทึกความพยายามในการล็อกอิน
+            const canAttemptLogin = await checkAndLogAttempts(email);
+            if (!canAttemptLogin) {
+                return;
+            }
+
+            // เมื่อเข้าสู่ระบบสำเร็จ
+            auth.signInWithEmailAndPassword(email, password)
+                .then(async (userCredential) => {
+                    // เข้าสู่ระบบสำเร็จ
+                    const user = userCredential.user;
+                    console.log('เข้าสู่ระบบสำเร็จ:', user);
+                    // รีเซ็ตความพยายามในการล็อกอินหลังจากเข้าสู่ระบบสำเร็จ
+                    await db.collection('loginAttempts').doc(email).set({ attempts: 0 });
+                    // นำทางไปยังหน้าที่ต้องการ
+                    window.location.href = 'https://thcgh2023.github.io/thcgsdashbord/';
+                })
+                .catch((error) => {
+                    // เกิดข้อผิดพลาดในการเข้าสู่ระบบ
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error('เกิดข้อผิดพลาด:', errorMessage);
+                    // แสดงข้อผิดพลาดหรือให้ผู้ใช้ลองใหม่อีกครั้ง
+                });
+        });
+    </script>
 </body>
 </html>
