@@ -24,6 +24,7 @@
                 <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" placeholder="รหัสผ่าน" required>
             </div>
             <p id="errorAttempts" class="text-red-500 text-sm"></p>
+            <p id="errorMessage" class="text-red-500 text-sm"></p>
             <div class="flex items-center justify-between">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                     เข้าสู่ระบบ
@@ -80,6 +81,9 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            // รีเซ็ตข้อความข้อผิดพลาดก่อนทำการล็อกอิน
+            document.getElementById('errorMessage').innerText = '';
+
             // ตรวจสอบและบันทึกความพยายามในการล็อกอิน
             const canAttemptLogin = await checkAndLogAttempts(email);
             if (!canAttemptLogin) {
@@ -102,6 +106,8 @@
                     const errorCode = error.code;
                     const errorMessage = error.message;
                     console.error('เกิดข้อผิดพลาด:', errorMessage);
+                    // แสดงข้อความข้อผิดพลาด
+                    document.getElementById('errorMessage').innerText = 'รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง';
                     // ดึงจำนวนความพยายามล่าสุดหลังจากเกิดข้อผิดพลาด
                     const userDoc = db.collection('loginAttempts').doc(email);
                     const docSnapshot = await userDoc.get();
